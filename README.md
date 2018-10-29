@@ -1,2 +1,0 @@
-# mymessenger
-A simple messenger
