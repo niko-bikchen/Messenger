@@ -1,3 +1,8 @@
+/**
+ * File name: MessengerServer.java
+ * ===============================
+ * This file implements server for the messenger 
+ */
 package server;
 
 import java.io.*;
@@ -37,6 +42,10 @@ public class MessengerServer {
 		}
 	}
 
+	/**
+	 * Sends the newly connected user all the messages that was sent before he connected
+	 * @param writer output stream of the newly connected user
+	 */
 	private static void sendHistory(PrintWriter writer) {
 		try {
 			ResultSet resultSet = statement.executeQuery("SELECT time, login, message FROM `messenger`.`chatnew`");
@@ -50,30 +59,11 @@ public class MessengerServer {
 		}
 	}
 
-	public static class TestClass{
-		public String myS;
-		public TestClass(String s) { myS = s; };
-		@Override
-		public String toString() { return "TestClass = myS:" + myS; };
-	}
-	
-	public static class Wrapper{
-		private TestClass myTestClass;
-		public Wrapper(TestClass testClass) { myTestClass = testClass; };
-		@Override
-		public String toString() { return myTestClass.toString(); }; 
-	}
-	
 	private static class ServerListener implements Runnable {
 		BufferedReader reader;
 		int innerIndex;
+
 		public ServerListener(Socket socket, int index) {
-			TestClass toUpdate = new TestClass("abc");
-			Wrapper myWrapper = new Wrapper(toUpdate);	
-			System.out.println("My Wrapper 1:" + myWrapper);
-			toUpdate.myS = "def";
-			System.out.println("My Wrapper 2:" + myWrapper);
-			
 			innerIndex = index;
 			try {
 				reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -81,49 +71,46 @@ public class MessengerServer {
 				e.printStackTrace();
 			}
 		}
-		private static String myS;
-		private static void test(String s)
-		{
-			myS = s;
-		}
-		
 
 		@Override
 		public void run() {
 			String message = "";
 			Calendar calendar;
-			
-				while (!sockets.get(innerIndex).isClosed()) {
-					System.out.println("Waiting...");
-					try {
-						message = reader.readLine();
-					} catch (IOException e) {
-						if(e.getMessage().equals("Connection reset"))
-						{
-							System.out.println("Client disconnected...");
-							break;
-						}
-						else
-							e.printStackTrace();;
-					}
-					System.out.println("New mesage" + message);
-					calendar = Calendar.getInstance();
-					if (!(message.startsWith("-----")))
-						sendEveryone(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + " ",
-								message);
-					else {
-						for (int i = 0; i < writerStreams.size(); i++) {
-							writerStreams.get(i).println(message);
-							writerStreams.get(i).flush();
-						}
+
+			while (!sockets.get(innerIndex).isClosed()) {
+				System.out.println("Waiting...");
+				try {
+					message = reader.readLine();
+				} catch (IOException e) {
+					if (e.getMessage().equals("Connection reset")) {
+						System.out.println("Client disconnected...");
+						break;
+					} else
+						e.printStackTrace();
+					;
+				}
+				System.out.println("New mesage" + message);
+				calendar = Calendar.getInstance();
+				if (!(message.startsWith("-----")))
+					sendEveryone(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + " ",
+							message);
+				else {
+					for (int i = 0; i < writerStreams.size(); i++) {
+						writerStreams.get(i).println(message);
+						writerStreams.get(i).flush();
 					}
 				}
-				writerStreams.remove(innerIndex);
-				sockets.remove(innerIndex);
-			
+			}
+			writerStreams.remove(innerIndex);
+			sockets.remove(innerIndex);
 		}
 	}
 
+	/**
+	 * This method sends message to the all members of the chat
+	 * @param time time when the message was sent
+	 * @param message message to send
+	 */
 	private static void sendEveryone(String time, String message) {
 		int x = message.indexOf(':');
 		String login = message.substring(0, x);
@@ -134,6 +121,12 @@ public class MessengerServer {
 		}
 	}
 
+	/**
+	 * This method saves message into the database
+	 * @param time time when the message was sent
+	 * @param login login of the user who sent the message
+	 * @param message the message
+	 */
 	private static void saveMessage(String time, String login, String message) {
 		try {
 			statement.executeUpdate("INSERT INTO `messenger`.`chatnew` (`time`, `login`, `message`) VALUES ('" + time

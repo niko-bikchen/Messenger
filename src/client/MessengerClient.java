@@ -1,10 +1,14 @@
+/**
+ * File name: MessengerClient.java
+ * ===============================
+ * This class implements client for the messenger
+ */
 package client;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.awt.event.*;
 
 public class MessengerClient {
