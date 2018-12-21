@@ -1,6 +1,5 @@
 /**
- * File name: MessengerServer.java
- * ===============================
+ * @author Mykola Bikchentaev
  * This file implements server for the messenger 
  */
 package server;
@@ -11,8 +10,8 @@ import java.sql.*;
 import java.util.*;
 
 public class MessengerServer {
-	private static ArrayList<PrintWriter> writerStreams;
-	private static ArrayList<Socket> sockets;
+	private static HashMap<Integer, PrintWriter> writerStreams;
+	private static HashMap<Integer, Socket> sockets;
 	private static java.sql.Statement statement;
 	private static Connection connection;
 	private static int count;
@@ -22,19 +21,24 @@ public class MessengerServer {
 	}
 
 	private static void initialize() {
-		writerStreams = new ArrayList<>();
-		sockets = new ArrayList<>();
+		writerStreams = new HashMap<>();
+		sockets = new HashMap<>();
 		try {
 			ServerSocket myServerSocket = new ServerSocket(5000);
 			while (true) {
 				Socket userSocket = myServerSocket.accept();
 				PrintWriter writer = new PrintWriter(userSocket.getOutputStream());
-				writerStreams.add(writer);
-				sockets.add(userSocket);
+				if (writerStreams.containsKey(count)) {
+					while (writerStreams.get(count) != null)
+						count++;
+				}
+				writerStreams.put(count, writer);
+				sockets.put(count, userSocket);
 				setDataBase();
 				sendHistory(writer);
 				Thread thread = new Thread(new ServerListener(userSocket, count));
 				thread.start();
+				System.out.println("Client number " + count + " have connected");
 				count++;
 			}
 		} catch (IOException e) {
@@ -43,8 +47,11 @@ public class MessengerServer {
 	}
 
 	/**
-	 * Sends the newly connected user all the messages that was sent before he connected
-	 * @param writer output stream of the newly connected user
+	 * Sends the newly connected user all the messages that were sent before he
+	 * connected
+	 * 
+	 * @param writer
+	 *            output stream of the newly connected user
 	 */
 	private static void sendHistory(PrintWriter writer) {
 		try {
@@ -78,18 +85,16 @@ public class MessengerServer {
 			Calendar calendar;
 
 			while (!sockets.get(innerIndex).isClosed()) {
-				System.out.println("Waiting...");
 				try {
 					message = reader.readLine();
 				} catch (IOException e) {
 					if (e.getMessage().equals("Connection reset")) {
-						System.out.println("Client disconnected...");
+						System.out.println("Client number " + innerIndex + " disconnected");
 						break;
 					} else
 						e.printStackTrace();
 					;
 				}
-				System.out.println("New mesage" + message);
 				calendar = Calendar.getInstance();
 				if (!(message.startsWith("-----")))
 					sendEveryone(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE) + " ",
@@ -103,13 +108,17 @@ public class MessengerServer {
 			}
 			writerStreams.remove(innerIndex);
 			sockets.remove(innerIndex);
+			count--;
 		}
 	}
 
 	/**
-	 * This method sends message to the all members of the chat
-	 * @param time time when the message was sent
-	 * @param message message to send
+	 * This method sends message to all members of the chat
+	 * 
+	 * @param time
+	 *            time when the message was sent
+	 * @param message
+	 *            message to send
 	 */
 	private static void sendEveryone(String time, String message) {
 		int x = message.indexOf(':');
@@ -123,9 +132,13 @@ public class MessengerServer {
 
 	/**
 	 * This method saves message into the database
-	 * @param time time when the message was sent
-	 * @param login login of the user who sent the message
-	 * @param message the message
+	 * 
+	 * @param time
+	 *            time when the message was sent
+	 * @param login
+	 *            login of the user who sent the message
+	 * @param message
+	 *            the message
 	 */
 	private static void saveMessage(String time, String login, String message) {
 		try {

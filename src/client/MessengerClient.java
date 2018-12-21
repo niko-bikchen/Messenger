@@ -1,6 +1,5 @@
 /**
- * File name: MessengerClient.java
- * ===============================
+ * @author Mykola Bikchentaev
  * This class implements client for the messenger
  */
 package client;
@@ -50,7 +49,6 @@ public class MessengerClient {
 				}
 			}
 		});
-		myMessenger.setTitle("MyMessager v1.0");
 		myMessenger.setBounds(100, 100, 650, 400);
 		myMessenger.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		myMessenger.getContentPane().setLayout(new BorderLayout(0, 0));
@@ -102,6 +100,7 @@ public class MessengerClient {
 
 		writer.println("-----" + login + " have connected-----");
 		writer.flush();
+		myMessenger.setTitle("MyMessager v1.0. User: " + login);
 	}
 
 	private static class ServerListener implements Runnable {
